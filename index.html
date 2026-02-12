@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ashte Store Signer</title>
+    <title>iOS94 IPA Signer</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; text-align: center; padding: 20px; }
         .card { background: white; padding: 25px; border-radius: 20px; max-width: 400px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -13,15 +13,15 @@
         input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; background: #fafafa; }
         button { width: 100%; padding: 14px; background-color: #007aff; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #status { margin-top: 15px; font-size: 13px; color: #666; white-space: pre-line; text-align: center; }
-        .error { color: red; }
-        .success { color: green; }
+        #status { margin-top: 15px; font-size: 13px; color: #666; white-space: pre-line; text-align: center; direction: ltr; }
+        .error { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>واژۆکردنی IPA</h2>
+    <h2>واژۆکردنی ڕاستەوخۆ - iOS94</h2>
     
     <div class="input-group">
         <label>1. فایلی IPA هەڵبژێرە:</label>
@@ -50,9 +50,9 @@
 
 <script>
     // ************************************
-    // زانیارییەکانت لێرە جێگیر کراون
-    const OWNER = 'ashtemzere'; 
-    const REPO = 'AshteStore';   
+    // زانیارییەکانم لێرە بۆت ڕاستکردەوە
+    const OWNER = 'ios94'; 
+    const REPO = 'Sign';   
     // ************************************
 
     async function startProcess() {
@@ -74,25 +74,25 @@
 
         try {
             // 1. Upload IPA
-            status.innerText = "⏳ خەریکە IPA دەنێردرێت (مەیکەرەوە)...";
+            status.innerText = "⏳ Uploading IPA...";
             await uploadFile(ipaFile, 'uploads/app.ipa', token);
 
             // 2. Upload P12
-            status.innerText = "⏳ خەریکە P12 دەنێردرێت...";
+            status.innerText = "⏳ Uploading P12...";
             await uploadFile(p12File, 'uploads/cert.p12', token);
 
             // 3. Upload Provision
-            status.innerText = "⏳ خەریکە MobileProvision دەنێردرێت...";
+            status.innerText = "⏳ Uploading MobileProvision...";
             await uploadFile(provFile, 'uploads/profile.mobileprovision', token);
 
             // Success
-            status.innerText = "✅ هەمووی نێردرا!\nGitHub ئێستا خەریکی واژۆکردنە.\nدوای ١-٢ خولەک سەیری بەشی (Actions) بکە.";
+            status.innerText = "✅ هەمووی نێردرا!\n ئێستا GitHub خەریکی واژۆکردنە.\n دوای ١ خولەک سەیری بەشی (Actions) بکە.";
             status.className = "success";
             btn.innerText = "سەرکەوتوو بوو";
             
         } catch (error) {
             console.error(error);
-            status.innerText = "❌ هەڵە ڕوویدا:\n" + error.message;
+            status.innerText = "❌ هەڵە:\n" + error.message;
             status.className = "error";
             btn.disabled = false;
             btn.innerText = "ناردن و واژۆکردن";
@@ -106,7 +106,7 @@
             reader.onload = async function() {
                 const base64Content = reader.result.split(',')[1];
                 
-                // Check if file exists to get SHA (needed for update)
+                // Check if file exists to get SHA
                 let sha = null;
                 try {
                     const checkUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
@@ -138,10 +138,12 @@
                     })
                 });
 
-                if (response.ok) resolve();
-                else {
-                    const errData = await response.json();
-                    reject(new Error(errData.message || "Unknown Upload Error"));
+                if (response.ok) {
+                    resolve();
+                } else {
+                    // هەوڵدەدەین بزانین هەڵەکە چییە
+                    const errData = await response.json().catch(() => ({})); 
+                    reject(new Error(response.status + " " + (errData.message || response.statusText)));
                 }
             };
             reader.onerror = () => reject(new Error("File reading failed"));
