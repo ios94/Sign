@@ -1,0 +1,48 @@
+name: Auto IPA Signer
+on:
+  push:
+    paths:
+      - 'uploads/**.ipa'
+
+jobs:
+  sign-and-release:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install zsign
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev unzip zip
+          wget https://github.com/zhlynn/zsign/raw/master/zsign
+          chmod +x zsign
+          sudo mv zsign /usr/local/bin/
+
+      - name: Find Files
+        id: files
+        run: |
+          IPA_FILE=$(find uploads -name "*.ipa" | head -n 1)
+          P12_FILE=$(find uploads -name "*.p12" | head -n 1)
+          PROV_FILE=$(find uploads -name "*.mobileprovision" | head -n 1)
+          
+          echo "ipa_path=$IPA_FILE" >> $GITHUB_OUTPUT
+          echo "p12_path=$P12_FILE" >> $GITHUB_OUTPUT
+          echo "prov_path=$PROV_FILE" >> $GITHUB_OUTPUT
+
+      - name: Sign IPA
+        env:
+          P12_PASS: "123456" 
+        run: |
+          zsign -k "${{ steps.files.outputs.p12_path }}" -p $P12_PASS -m "${{ steps.files.outputs.prov_path }}" -o signed_app.ipa "${{ steps.files.outputs.ipa_path }}"
+
+      - name: Create Release & Download Link
+        uses: softprops/action-gh-release@v1
+        with:
+          files: signed_app.ipa
+          tag_name: v${{ github.run_number }}
+          name: "Signed IPA v${{ github.run_number }}"
+          body: "فایلەکەت بە سەرکەوتوویی واژۆ کرا."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
