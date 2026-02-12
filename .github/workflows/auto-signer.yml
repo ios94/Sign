@@ -28,12 +28,7 @@ jobs:
           PROV_FILE=$(find uploads -name "*.mobileprovision" | head -n 1)
           PASS_FILE=$(find uploads -name "password.txt" | head -n 1)
           
-          # Read Password
-          if [ -f "$PASS_FILE" ]; then
-            P12_PASS=$(cat "$PASS_FILE")
-          else
-            P12_PASS="@ashtemobile" # Fallback
-          fi
+          if [ -f "$PASS_FILE" ]; then P12_PASS=$(cat "$PASS_FILE"); else P12_PASS="123456"; fi
           
           echo "ipa_path=$IPA_FILE" >> $GITHUB_OUTPUT
           echo "p12_path=$P12_FILE" >> $GITHUB_OUTPUT
@@ -42,19 +37,52 @@ jobs:
 
       - name: Sign IPA
         run: |
-          # Use the password from the file
           zsign -k "${{ steps.files.outputs.p12_path }}" -p "${{ steps.files.outputs.p12_pass }}" -m "${{ steps.files.outputs.prov_path }}" -o signed_app.ipa "${{ steps.files.outputs.ipa_path }}"
 
-      - name: Create Release & Download Link
+      - name: Generate Plist
+        run: |
+          # دروستکردنی فایلی Plist بۆ دابەزاندنی ڕاستەوخۆ
+          cat <<EOF > manifest.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>items</key>
+              <array>
+                  <dict>
+                      <key>assets</key>
+                      <array>
+                          <dict>
+                              <key>kind</key>
+                              <string>software-package</string>
+                              <key>url</key>
+                              <string>https://github.com/${{ github.repository }}/releases/download/v${{ github.run_number }}/signed_app.ipa</string>
+                          </dict>
+                      </array>
+                      <key>metadata</key>
+                      <dict>
+                          <key>bundle-identifier</key>
+                          <string>com.ios94.signed</string>
+                          <key>bundle-version</key>
+                          <string>1.0</string>
+                          <key>kind</key>
+                          <string>software</string>
+                          <key>title</key>
+                          <string>Signed App</string>
+                      </dict>
+                  </dict>
+              </array>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: signed_app.ipa
+          files: |
+            signed_app.ipa
+            manifest.plist
           tag_name: v${{ github.run_number }}
-          name: "واژۆکراو - وەشانی ${{ github.run_number }}"
-          body: |
-            فایلەکەت بە سەرکەوتوویی واژۆ کرا.
-            [دابەزاندنی فایل (Download IPA)](https://github.com/${{ github.repository }}/releases/download/v${{ github.run_number }}/signed_app.ipa)
-            
-            Install via: itms-services://?action=download-manifest&url=https://your-plist-url...
+          name: "v${{ github.run_number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
