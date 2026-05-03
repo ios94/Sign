@@ -15,9 +15,10 @@ jobs:
       - name: Install zsign
         run: |
           sudo apt-get update
-          sudo apt-get install -y libssl-dev unzip zip
-          wget https://github.com/zhlynn/zsign/raw/master/zsign
-          chmod +x zsign
+          sudo apt-get install -y libssl-dev unzip zip build-essential
+          git clone https://github.com/zhlynn/zsign.git
+          cd zsign
+          make
           sudo mv zsign /usr/local/bin/
 
       - name: Find Files
