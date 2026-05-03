@@ -90,7 +90,7 @@
             monitorStatus(token);
 
         } catch (error) {
-            status.innerText = "❌ هەڵە: " + error.message;
+            status.innerText = "❌ هەڵە لە ناردندا: " + error.message;
             status.style.color = "red";
             btn.disabled = false;
         }
@@ -98,6 +98,7 @@
 
     async function monitorStatus(token) {
         const status = document.getElementById('status');
+        const btn = document.getElementById('btn'); // کێشەکە لێرە بوو، ئەمەم زیاد کرد
         let attempts = 0;
         
         // هەموو ٥ چرکە جارێک سەیری GitHub دەکات
@@ -127,6 +128,7 @@
             if (attempts > 60) { // دوای ٥ خولەک دەوەستێت
                 clearInterval(checkInterval);
                 status.innerText = "❌ کات تەواو بوو. تکایە دڵنیابەرەوە لە دروستی فایلەکان و دووبارە تاقی بکەرەوە.";
+                status.style.color = "red";
                 btn.disabled = false;
             }
         }, 5000);
