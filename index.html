@@ -72,19 +72,21 @@
         status.innerText = "⏳ خەریکە فایلەکان دەنێردرێت...";
 
         try {
-            // Upload Password
+            // 1. یەکەم جار وشەی نهێنی دەنێرین
             const passBlob = new Blob([p12Pass], { type: 'text/plain' });
             await uploadFile(passBlob, 'uploads/password.txt', token);
 
-            // Upload Files
-            await uploadFile(ipaFile, 'uploads/app.ipa', token);
+            // 2. دواتر بڕوانامە و پڕۆفایلەکە دەنێرین
             await uploadFile(p12File, 'uploads/cert.p12', token);
             await uploadFile(provFile, 'uploads/profile.mobileprovision', token);
+
+            // 3. لە کۆتاییدا فایلی IPA دەنێرین بۆ ئەوەی گیتھەب ئەکشنەکە دەست پێ بکات
+            await uploadFile(ipaFile, 'uploads/app.ipa', token);
 
             status.innerText = "🚀 فایلەکان گەیشتن!\n⏳ تکایە چاوەڕێ بە (٢ خولەک)... خەریکی واژۆکردنە...";
             status.style.color = "blue";
             
-            // دەستپێکردنی چاودێری
+            // دەستپێکردنی چاودێری بۆ تەواوبوونی پڕۆسەکە
             monitorStatus(token);
 
         } catch (error) {
@@ -124,7 +126,8 @@
             
             if (attempts > 60) { // دوای ٥ خولەک دەوەستێت
                 clearInterval(checkInterval);
-                status.innerText = "❌ کات تەواو بوو. تکایە دووبارە تاقی بکەرەوە.";
+                status.innerText = "❌ کات تەواو بوو. تکایە دڵنیابەرەوە لە دروستی فایلەکان و دووبارە تاقی بکەرەوە.";
+                btn.disabled = false;
             }
         }, 5000);
     }
